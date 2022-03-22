@@ -6,8 +6,11 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/fladago/gbbackone/api/server"
+	"github.com/fladago/gbbackone/app/repos/user"
 	"github.com/fladago/gbbackone/app/starter"
 	"github.com/fladago/gbbackone/db/mem/usermemstore"
+	"golang.org/x/tools/cmd/getgo/server"
 )
 
 func main() {
@@ -22,11 +25,14 @@ func main() {
 	ust := usermemstore.NewUsers()
 	//Передаем стор в app
 	a := starter.NewApp(ust)
+	us := user.NewUsers(ust)
+	srv := server.NewServer(":8000", us, nil)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	//Пробрасываем контекст, чтобы отловить сигналы из операционной системы
-	go a.Serve(ctx, wg)
+	//Также передаем сервер
+	go a.Serve(ctx, wg, srv)
 	<-ctx.Done()
 	//канцелим контекст, потом дожидаемся всех горутин
 	cancel()
