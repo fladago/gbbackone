@@ -35,6 +35,7 @@ func NewRouter(us *user.Users) *Router {
 	r.HandleFunc("/read", r.AuthMiddleware(http.HandlerFunc(r.ReadUser)).ServeHTTP)
 	r.HandleFunc("/delete", r.AuthMiddleware(http.HandlerFunc(r.DeleteUser)).ServeHTTP)
 	r.HandleFunc("/search", r.AuthMiddleware(http.HandlerFunc(r.SearchUser)).ServeHTTP)
+
 	return r
 }
 
@@ -43,10 +44,10 @@ func NewRouter(us *user.Users) *Router {
 //из нескольких объектов бизнес логики можно собрать в адаптере какое-то представление
 //адаптер может вызывать несколько методов бизнес логики
 type User struct {
-	ID          uuid.UUID `json:"id,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	Data        string    `json:"data,omitempty"`
-	Permissions int       `json:"permissions,omitempty"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Data        string    `json:"data"`
+	Permissions int       `json:"permissions"`
 }
 
 //мидлваре функция проверки на ошибку. Выносим отдельно
@@ -73,7 +74,10 @@ func (rt *Router) AuthMiddleware(next http.Handler) http.Handler {
 //В реквесте приходит json
 //Вначале необходимо проверить авторизацию
 func (rt *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
-
+	if r.Method != http.MethodPost {
+		http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		return
+	}
 	defer r.Body.Close()
 
 	u := User{}
@@ -111,6 +115,10 @@ func (rt *Router) CreateUser(w http.ResponseWriter, r *http.Request) {
 //в read получим id
 //read?uid=...
 func (rt *Router) ReadUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		return
+	}
 	//парсим url
 	suid := r.URL.Query().Get("uid")
 	if suid == "" {
@@ -149,6 +157,11 @@ func (rt *Router) ReadUser(w http.ResponseWriter, r *http.Request) {
 	)
 }
 func (rt *Router) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		return
+	}
+
 	suid := r.URL.Query().Get("uid")
 	if suid == "" {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -188,6 +201,11 @@ func (rt *Router) DeleteUser(w http.ResponseWriter, r *http.Request) {
 //search?q=...
 //При каждом запросе, в этом хэндлере запустится отдельная горутина
 func (rt *Router) SearchUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "bad method", http.StatusMethodNotAllowed)
+		return
+	}
+
 	//Одна проверка. Только если строка пустая, то возвращаем одну ошибку
 	q := r.URL.Query().Get("q")
 	if q == "" {
@@ -229,6 +247,8 @@ func (rt *Router) SearchUser(w http.ResponseWriter, r *http.Request) {
 					Data:        u.Data,
 					Permissions: u.Permissions,
 				})
+			//Стримим флушером, чанками
+			w.(http.Flusher).Flush()
 		}
 	}
 }
