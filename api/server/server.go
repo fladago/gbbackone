@@ -17,11 +17,8 @@ type Server struct {
 }
 
 //Создаем экземпляр структуры
-func NewServer(addr string, us *user.Users, h http.Handler) *Server {
-	s := &Server{
-		//Вставляем бизнес логику
-		us: us,
-	}
+func NewServer(addr string, h http.Handler) *Server {
+	s := &Server{}
 	s.srv = http.Server{
 		Addr:    addr,
 		Handler: h,
@@ -38,7 +35,8 @@ func NewServer(addr string, us *user.Users, h http.Handler) *Server {
 //Делаем два метода
 //Надо стартовать и остановить сервер
 //Стартуем с контекстом
-func (s *Server) Start() {
+func (s *Server) Start(us *user.Users) {
+	s.us = us
 	go s.srv.ListenAndServe()
 }
 

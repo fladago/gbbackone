@@ -23,7 +23,7 @@ func NewApp(ust user.UserStore) *App {
 }
 
 type HTTPServer interface {
-	Start()
+	Start(us *user.Users)
 	Stop(ctx context.Context)
 }
 
@@ -32,7 +32,7 @@ type HTTPServer interface {
 func (a *App) Serve(ctx context.Context, wg *sync.WaitGroup, hs HTTPServer) {
 	defer wg.Done()
 	//Стартуем сервер
-	hs.Start()
+	hs.Start(a.us)
 	//Ждем, пока контекст заканселится. Грейсфулшатдаун
 	//В мейне ничего не делаем. Все делается в бизнес логике
 	<-ctx.Done()

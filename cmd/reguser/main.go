@@ -6,11 +6,11 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/fladago/gbbackone/api/handler"
 	"github.com/fladago/gbbackone/api/server"
 	"github.com/fladago/gbbackone/app/repos/user"
 	"github.com/fladago/gbbackone/app/starter"
 	"github.com/fladago/gbbackone/db/mem/usermemstore"
-	"golang.org/x/tools/cmd/getgo/server"
 )
 
 func main() {
@@ -26,7 +26,8 @@ func main() {
 	//Передаем стор в app
 	a := starter.NewApp(ust)
 	us := user.NewUsers(ust)
-	srv := server.NewServer(":8000", us, nil)
+	h := handler.NewRouter(us)
+	srv := server.NewServer(":8000", h)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
